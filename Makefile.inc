@@ -1,7 +1,6 @@
 # Default values.
 CXX ?= g++
 CXXWARNINGS ?= -Wall -Wextra -Wundef -pedantic
-CXXINTRINSICS ?= -msse2 -msse3 -msse4 -mpopcnt
 CXXFEATURES ?= -funsafe-math-optimizations -fno-math-errno -std=c++11
 CXXFLAGS ?= ${CXXWARNINGS} ${CXXINTRINSICS} ${CXXFEATURES} -g -O3
 
@@ -11,9 +10,37 @@ OPENMP ?= -fopenmp
 # Always compile programs and libs with multi-threading.
 CXXFLAGS += -pthread
 
+# Add include and library paths for PNG
+PNG_INCLUDE_PATH = /usr/local/include
+PNG_LIB_PATH = /usr/local/lib
+
+CXXFLAGS += -I${PNG_INCLUDE_PATH}
+LDFLAGS += -L${PNG_LIB_PATH} -lpng
+
 UNAME = $(shell uname)
 ifeq (${UNAME},Darwin)
     OPENMP =
+endif
+
+# Determine the target
+ifeq ($(BUILD_TARGET),ios_simulator)
+	SDK = iphonesimulator
+	ARCH = x86_64
+	SDK_PATH = $(shell xcrun --sdk $(SDK) --show-sdk-path)
+	CXX = xcrun -sdk $(SDK) clang++
+	CXXFLAGS += -arch $(ARCH) -isysroot $(SDK_PATH) -mios-simulator-version-min=9.0
+	LDFLAGS += -arch $(ARCH) -isysroot $(SDK_PATH) -mios-simulator-version-min=9.0
+else ifeq ($(BUILD_TARGET),ios_device)
+	SDK = iphoneos
+	ARCH = arm64
+	SDK_PATH = $(shell xcrun --sdk $(SDK) --show-sdk-path)
+	CXX = xcrun -sdk $(SDK) clang++
+	CXXFLAGS += -arch $(ARCH) -isysroot $(SDK_PATH) -miphoneos-version-min=9.0
+	LDFLAGS += -arch $(ARCH) -isysroot $(SDK_PATH) -miphoneos-version-min=9.0
+    CXXFLAGS += -D__ARM_NEON__ -D__LITTLE_ENDIAN__
+else
+    CXXINTRINSICS ?= -msse2 -msse3 -msse4 -mpopcnt
+    CXXFLAGS += ${CXXINTRINSICS}
 endif
 
 COMPILE.cc = ${CXX} ${CXXFLAGS} ${CPPFLAGS} -c
