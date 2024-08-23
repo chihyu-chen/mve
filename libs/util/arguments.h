@@ -123,10 +123,10 @@ public:
 
     /** Parses arguments from a vector. */
     void parse (std::vector<std::string> const& args)
-        throw(util::Exception);
+    noexcept(false);
     /** Parses command line arguments. */
     void parse (int argc, char const* const* argv)
-        throw(util::Exception);
+    noexcept(false);
 
     /**
      * Iterator for the results. If opt is null, the argument is a
